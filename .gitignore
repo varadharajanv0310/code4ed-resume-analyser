@@ -1,5 +1,6 @@
-# Environment variables
+# Environment and secrets
 .env
+.streamlit/secrets.toml
 
 # Python
 __pycache__/
@@ -11,13 +12,12 @@ venv/
 env/
 ENV/
 
-# Database
+# Database and uploads
 *.db
 database/*.db
-
-# Uploaded files
 data/uploads/
 data/processed/
+data/vector_db/
 
 # IDE
 .vscode/
@@ -28,3 +28,6 @@ data/processed/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
