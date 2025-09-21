@@ -16,3 +16,4 @@ numpy>=1.24.0
 pandas>=2.1.0
 plotly>=5.0.0
 pysqlite3-binary
+nltk-data
