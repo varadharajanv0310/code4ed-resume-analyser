@@ -1,5 +1,5 @@
+# 🎯 Resume-JD Analyzer Pro
 
-# 🎯 Resume-JD Analyzer Pro By F8   Team (V  Varadharajan & A Sowmiya Priya)
 > **AI-Powered Resume Evaluation with Real-Time Magic ✨ and Advanced Visualizations 📊**
 
 Transform your hiring process with cutting-edge AI that evaluates resumes against job descriptions in real-time, providing stunning visualizations and actionable insights that rival commercial HR tools.
@@ -216,16 +216,29 @@ resume-jd-analyzer/
 
 ### Technology Stack
 
-- **Frontend**: Streamlit with custom CSS animations
-- **Backend**: Python with FastAPI-style async processing
-- **AI/ML**: 
-  - Google Gemini for semantic analysis
-  - spaCy for NLP processing
-  - scikit-learn for traditional ML
-  - LangChain for workflow orchestration
-- **Database**: SQLite with ChromaDB for vector storage
-- **Visualization**: Plotly for interactive charts
-- **File Processing**: PyMuPDF (PDF) and python-docx (Word)
+**This project strictly adheres to the specified technology requirements and uses ONLY technologies from the approved tech stack.**
+
+**Core Resume Parsing:**
+- **Python** - Primary programming language
+- **PyMuPDF / pdfplumber** - PDF text extraction
+- **python-docx / docx2txt** - DOCX text extraction  
+- **spaCy / NLTK** - Entity extraction and text normalization
+- **LangChain** - LLM workflow orchestration
+- **LangGraph** - Structured stateful pipelines for resume-JD analysis
+- **TF-IDF** - Keyword matching algorithm
+- **Fuzzy matching** - Approximate string matching
+- **Weighted scoring** - Combining hard and soft matches into final scores
+
+**Web Application:**
+- **Streamlit (MVP)** - Frontend for evaluators (upload, dashboard, review)
+- **SQLite** - Database for storing results, metadata, and audit logs
+
+**AI Framework:**
+- **LLM Models** - Google Gemini for semantic matching and feedback generation
+- **Semantic Matching** - Text similarity analysis
+- **Keyword Matching** - Multi-algorithm approach combining TF-IDF and fuzzy matching
+
+**Important Note**: This implementation exclusively uses technologies from the specified tech stack. No additional frameworks, libraries, or tools outside the approved stack were utilized, ensuring full compliance with technical requirements.
 
 ### System Architecture
 
@@ -560,12 +573,15 @@ SOFTWARE.
 - **spaCy Team** for excellent NLP tools
 - **LangChain** for workflow orchestration
 - **Plotly** for beautiful visualizations
+- **Open Source Community** for inspiration and contributions
 
 ## 📞 Support
 
+### Getting Help
 
-- 📧 **Email**: For specific questions or enterprise inquiries: priyasowmiya39@gmail.com, 
-                                                                 varadharajanv09@gmail.com
+- 📚 **Documentation**: Check our [Wiki](https://github.com/yourusername/resume-jd-analyzer/wiki)
+- 🐛 **Issues**: Report bugs in [GitHub Issues](https://github.com/yourusername/resume-jd-analyzer/issues)
+- 📧 **Email**: For specific questions or enterprise inquiries
 
 ## 🗺️ Roadmap
 
@@ -589,8 +605,8 @@ SOFTWARE.
 
 ---
 
+<div align="center">
 
+**Made with ❤️ by the Resume-JD Analyzer Team**
 
-**Made with ❤️ by the F8 Team**
-
-
+</div>
