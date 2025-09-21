@@ -1,4 +1,4 @@
-# 🎯 Resume-JD Analyzer Pro
+# 🎯 Resume-JD Analyzer Pro (By Team F8: V Varadharajan & A Sowmiya Priya)
 
 > **AI-Powered Resume Evaluation with Real-Time Magic ✨ and Advanced Visualizations 📊**
 
@@ -577,11 +577,7 @@ SOFTWARE.
 
 ## 📞 Support
 
-### Getting Help
-
-- 📚 **Documentation**: Check our [Wiki](https://github.com/yourusername/resume-jd-analyzer/wiki)
-- 🐛 **Issues**: Report bugs in [GitHub Issues](https://github.com/yourusername/resume-jd-analyzer/issues)
-- 📧 **Email**: For specific questions or enterprise inquiries
+- 📧 **Email**: For specific questions or enterprise inquiries : varadharajanv09@gmail.com, priyasowmiya39@gmail.com
 
 ## 🗺️ Roadmap
 
@@ -607,6 +603,6 @@ SOFTWARE.
 
 <div align="center">
 
-**Made with ❤️ by the Resume-JD Analyzer Team**
+**Made with ❤️ by F8 Team**
 
 </div>
