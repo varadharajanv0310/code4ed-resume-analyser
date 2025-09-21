@@ -14,7 +14,7 @@ sys.path.insert(0, str(app_dir))
 
 # Import and run the main application
 try:
-    from main import enhanced_main
+    from main import main
 
     # Set page config
     st.set_page_config(
@@ -25,7 +25,7 @@ try:
     )
 
     # Run the enhanced main application
-    enhanced_main()
+    main()
 
 except ImportError as e:
     st.error(f"Import error: {e}")
@@ -34,4 +34,5 @@ except ImportError as e:
 
 except Exception as e:
     st.error(f"Application error: {e}")
+
     st.info("Please check the logs for more details.")
