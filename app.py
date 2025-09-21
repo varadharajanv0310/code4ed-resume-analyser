@@ -7,6 +7,14 @@ import streamlit as st
 import sys
 import os
 from pathlib import Path
+import nltk
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+    nltk.download('punkt_tab')
+    nltk.download('stopwords')
+    nltk.download('wordnet')
 
 # Add the app directory to Python path
 app_dir = Path(__file__).parent / "app"
@@ -36,3 +44,4 @@ except Exception as e:
     st.error(f"Application error: {e}")
 
     st.info("Please check the logs for more details.")
+
