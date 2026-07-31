@@ -32,23 +32,37 @@ role has a list they can work through. The output has to be a gap, not a grade.
 
 ## Approach
 
-Scoring is **hybrid** rather than committing to either failure mode.
+Scoring runs on two paths, and which one you get depends on whether a language
+model is configured.
 
-- **Hard match** — exact keyword overlap, TF-IDF cosine similarity and fuzzy string
-  matching over the JD's extracted requirements. This is what catches a resume that
-  genuinely names the required tools, and it is cheap and explainable.
-- **Soft match** — embedding similarity over a vector store, which catches the
-  Docker/containerisation case that exact matching drops.
+**The deterministic path, which always runs.** Exact keyword overlap, TF-IDF cosine
+similarity and fuzzy string matching (`keyword_matcher.py`) establish what the
+resume literally says. On top of that `scorer.py` applies a hand-weighted rubric:
+skill categories carry fixed weights — programming 0.25, frameworks 0.20, databases
+and cloud 0.15 each, then smaller terms — combined with separate experience,
+education, keyword-density and domain-relevance components. It is a rubric, not a
+learned model, and it is explainable line by line.
 
-The two are combined with configurable weights — `KEYWORD_WEIGHT` (0.4) and
-`SEMANTIC_WEIGHT` (0.6) — so the balance is a deployment decision rather than a
-hardcoded assumption. Weighting semantic higher acknowledges that vocabulary
-mismatch is the more common failure, while keeping a hard-match floor that a purely
-semantic score would lose.
+**The language-model path, when `GOOGLE_API_KEY` is set.** Gemini evaluates the
+resume against the JD and returns an overall score plus narrative feedback, which
+`process_llm_evaluation` reconciles against the deterministically extracted
+experience and education rather than trusting outright.
 
 **The output is a skill gap, not just a number.** The matcher tracks which JD
 requirements were satisfied and by what, so an unmatched requirement is reported as
-a named missing skill rather than disappearing into an aggregate.
+a named missing skill rather than disappearing into an aggregate. That is the part
+a student can act on.
+
+### What is not wired up
+
+`vector_store.py` exposes a `VectorStore` whose ChromaDB backend is disabled — the
+file says so, citing SQLite version conflicts on Streamlit Cloud. Its `client` is
+always `None`, `calculate_resume_jd_similarity` returns `0.0`, and every call site
+in `langchain_pipeline.py` and `langgraph_workflow.py` is guarded by
+`if vector_store.client:` and therefore never executes. There is no embedding
+similarity in the scoring path today, so vocabulary mismatch is handled by fuzzy
+matching and the LLM, not by vectors. `KEYWORD_WEIGHT` and `SEMANTIC_WEIGHT` are
+read into `Config` and used nowhere.
 
 ### Degrading without a language model
 
@@ -64,9 +78,9 @@ working triage tool, which is the point.
 | Capability | How it works |
 |---|---|
 | PDF and DOCX parsing | `pdf_parser` and `docx_parser` with a `docx2txt` fallback when python-docx yields nothing |
-| Hard match | Exact keyword overlap, TF-IDF cosine similarity and fuzzy matching via `fuzzywuzzy` |
-| Soft match | Embedding similarity over a vector store for vocabulary-mismatched requirements |
-| Weighted relevance score | Configurable hard/soft weights, defaulting to 0.4 / 0.6 |
+| Keyword matching | Exact overlap, TF-IDF cosine similarity and fuzzy matching via `fuzzywuzzy` |
+| Weighted rubric | Fixed per-category skill weights plus experience, education, keyword-density and domain-relevance components |
+| Optional LLM evaluation | Gemini scores and explains; its extracted experience and education are reconciled against the deterministic parse |
 | Skill-gap output | Unmatched JD requirements surfaced as named missing skills |
 | Live extraction preview | Skills detected and displayed as the file is parsed, before scoring completes |
 | Graceful LLM fallback | Full deterministic pipeline when no API key is configured |
@@ -108,18 +122,24 @@ resume (PDF / DOCX)            job description (text)
         │                              │
         └──────────────┬───────────────┘
                        ▼
-              ┌────────────────────┐
-              │  hard match        │  exact keywords · TF-IDF · fuzzy
-              │  soft match        │  vector-store embedding similarity
-              └─────────┬──────────┘
-                        ▼
-              scorer  (0.4 · hard + 0.6 · soft)
-                        │
-                        ├──► relevance score
-                        └──► named missing skills
+              ┌──────────────────────────┐
+              │  keyword_matcher         │  exact · TF-IDF · fuzzy
+              └────────────┬─────────────┘
+                           ▼
+              ┌──────────────────────────┐
+              │  scorer (weighted rubric)│  skills by category · experience
+              │                          │  education · keyword density
+              └────────────┬─────────────┘  domain relevance
+                           │
+                           ├──► relevance score
+                           └──► named missing skills
 
-              llm_service ─ optional narrative feedback
-                            (skipped entirely when no key is set)
+              llm_service ─ optional: Gemini score + narrative,
+                            reconciled against the deterministic parse.
+                            Skipped entirely when no key is set.
+
+              vector_store ─ present but disabled; client is always None
+                             and no call site executes.
 ```
 
 Parsing, matching and scoring are separate services under `app/services/`, so the
@@ -133,8 +153,7 @@ degraded code path.
 |---|---|---|
 | UI | Streamlit | A placement cell needs a URL, not a deployment; Streamlit gets there in one file |
 | Parsing | pdfplumber, python-docx, docx2txt | Two independent DOCX paths because real resumes are inconsistently authored |
-| Matching | scikit-learn, fuzzywuzzy | TF-IDF and cosine similarity are the right tools and are explainable |
-| Embeddings | Vector store over sentence embeddings | Catches vocabulary mismatch that exact matching drops |
+| Matching | scikit-learn, fuzzywuzzy | TF-IDF, cosine similarity and fuzzy ratios — cheap, and explainable to a student |
 | LLM | Google Gemini via LangChain | Narrative feedback only; the score never depends on it |
 | Storage | SQLite | Saved job descriptions and evaluation history; no server to run |
 
@@ -163,8 +182,8 @@ Optional. Copy `.env.example` to `.env` only if you want the language-model laye
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `GOOGLE_API_KEY` | No | — | Gemini narrative feedback. Absent, the app runs its hybrid fallback. |
-| `KEYWORD_WEIGHT` | No | `0.4` | Weight of the hard-match component |
-| `SEMANTIC_WEIGHT` | No | `0.6` | Weight of the soft-match component |
+| `KEYWORD_WEIGHT` | No | `0.4` | Read into `Config`, currently unused by the scorer |
+| `SEMANTIC_WEIGHT` | No | `0.6` | Read into `Config`, currently unused by the scorer |
 | `MIN_RELEVANCE_SCORE` | No | `30` | Threshold below which a resume is marked not relevant |
 | `MAX_FILE_SIZE_MB` | No | `10` | Upload size limit |
 | `ALLOWED_EXTENSIONS` | No | `pdf,docx` | Accepted upload types |
@@ -193,10 +212,14 @@ code4ed-resume-analyser/
 
 ## Limitations
 
+- **No semantic retrieval.** The vector store is disabled, so two documents that
+  describe the same skill in different words are matched only by fuzzy string
+  similarity or by the LLM. This is the most consequential gap between what the
+  project set out to do and what it does.
 - **No accuracy evaluation.** There is no labelled set of resume/JD pairs with
-  ground-truth relevance in this repository, so the weighting (0.4 / 0.6) is a
-  reasoned default rather than a tuned one. No accuracy figure is claimed because
-  none has been measured.
+  ground-truth relevance in this repository, so the rubric weights are reasoned
+  defaults rather than tuned ones. No accuracy figure is claimed because none has
+  been measured.
 - **English only.** Parsing and matching assume English resumes and descriptions.
 - **Skill extraction is vocabulary-bound.** A skill the extractor does not know
   cannot be reported as present or missing.
@@ -209,7 +232,9 @@ code4ed-resume-analyser/
 
 ## Roadmap
 
-- A labelled evaluation set so the hard/soft weighting can be tuned rather than assumed
+- Re-enable semantic matching with an embedding backend that survives the deploy
+  target, and actually consume `KEYWORD_WEIGHT` / `SEMANTIC_WEIGHT`
+- A labelled evaluation set so the rubric weights can be tuned rather than assumed
 - Bias audit across name, gender and institution signals before any real screening use
 - Structured section parsing (education, experience, projects) rather than flat text
 - Explanation of *why* each requirement matched, surfaced next to the score
